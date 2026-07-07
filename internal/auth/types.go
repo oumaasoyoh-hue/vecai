@@ -1,26 +1,34 @@
 package auth
 //user details and information
+type Role string
+
+const (
+    RoleOwner            Role = "owner"
+    RoleArchitect        Role = "architect"
+    RoleQuantitySurveyor Role = "quantity_surveyor"
+    RoleEngineer         Role = "engineer"
+    RoleContractor       Role = "contractor"
+    RoleSupplier         Role = "supplier"
+)
 type User struct {
 	Fullname 		string
 	ID	   			string
-	PasswordHash 	string
+	PasswordHash	string
 	Email 			string
-	Role            string
-	Isverified     	bool
+	Role		   	Role
+ 	IsVerified     	bool
 }
 // request and response for user registration, login, and verification
-type RegiterRequest struct {
+type RegisterRequest struct {
 	Fullname 		string `json:"fullname"`
+ 	Password 		string `json:"password"`
 	Email 			string `json:"email"`
-	Password 		string `json:"password"`
+	Role    		Role	`json:"role"`
 }
-
 type LoginRequest struct {
-	Token 			string `json:"token"`
-	Email 			string `json:"email"`
+ 	Email 			string `json:"email"`
 	Password 		string `json:"password"`
 }
-
 type VerifyRequest struct {
 	Token 			string `json:"token"`
 	Email 			string `json:"email"`
@@ -28,5 +36,21 @@ type VerifyRequest struct {
 type LoginResponse struct {
 	Token 			string `json:"token"`
 	Email 			string `json:"email"`
-	Role            string `json:"role"`
+	Role            Role	`json:"role"`
+}
+type VerifyResponse struct {
+	Token 			string `json:"token"`
+	Email 			string `json:"email"`
+	Role            Role	 `json:"role"`
+}
+type RegisterResponse struct {
+	Token 			string `json:"token"`
+	Email 			string `json:"email"`
+	Role            Role `json:"role"`
+}type ErrorResponse struct {
+	Message 		string `json:"message"`
+}
+type JWTClaims struct {
+	ID				string `json:"id"`
+ 	Role            Role `json:"role"`
 }
