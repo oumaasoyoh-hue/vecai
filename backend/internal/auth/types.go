@@ -54,4 +54,16 @@ type JWTClaims struct {
 	ID				string `json:"id"`
  	Role            Role `json:"role"`
 }
-exp
+type UserResponse struct {
+	ID			string 	`json:"id"`
+	Email 		string 	`json:"email"`
+	Fullname 	string 	`jsom:"email"`
+	isverified 	bool 	`joson:"user"`
+}
+type EnhancedAuthResponse struct {
+	Token 	string			`json:"token"`
+	User 	UserResponse 	`json:"user"`
+}
+type Service struct {
+	repo UserRepository
+}
