@@ -30,7 +30,7 @@ func NewSQLUserRepository(db *sql.DB) UserRepository {
 	return &SQLUserRepository()
 }
 
-func (r *SQLUserRepository) GetByEmail(ctx context.Context, email string) (*User.error) {
+func (r *SQLUserRepository) CreateUser(ctx context.Context, user *User) error {
 	query := `INSERT INTO users (id, fullname, email, password_hash, role, is_verified) 
 			  VALUES ($1, $2, $3, $4, $5, $6)`
 	_, err := r.db.ExecuteContext(ctx, query, user.ID, user.Fullname, user.Email, use.passwordHash, user.Role, user.IsVerified)
@@ -42,4 +42,19 @@ func (r *SQLUserRepository) GetByEmail(ctx context.Context, email string) (*User
 		return fmt.Errorf("failed to insert user: %w", err)
 	}	
 	return nil	  
+}
+
+func (r *SQLUserRepository) GetByEmail(ctx context.Context, email string) (*User, error) {
+	query := `SELECT_id, fullname, email, password_hash, role, Is_verified FROM users WHERE email = $1`
+
+	var user User
+
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&user.ID, &user.Fullname, &user.Email, &user.PasswordHash, &user.Role, &user.IsVerified)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to query user by email: %w", err)
+	}
+	return &user, nil
 }
