@@ -58,3 +58,15 @@ func (r *SQLUserRepository) GetByEmail(ctx context.Context, email string) (*User
 	}
 	return &user, nil
 }
+
+func (r *SQLUserRepository) UpdateVerificationStatus(ctx context.Context, email string, isVerified bool) error {
+	query := `UPDATE users SET is_verified = $1 WHERE email = $2`
+	result, err := r.db.ExecuteContext(ctx, query, isverified, email)
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	rowsAffected == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
