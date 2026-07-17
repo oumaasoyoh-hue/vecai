@@ -18,3 +18,28 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	UpdateVerificationStatus(ctx context.Context, email string, isVerified bool) error
 }
+
+type SQLUserRepository struct {
+	db *sql.DB
+}
+
+// interface compiliance check at compile time
+var_UserRepository = (*SQLUserRepository)(nil)
+
+func NewSQLUserRepository(db *sql.DB) UserRepository {
+	return &SQLUserRepository()
+}
+
+func (r *SQLUserRepository) GetByEmail(ctx context.Context, email string) (*User.error) {
+	query := `INSERT INTO users (id, fullname, email, password_hash, role, is_verified) 
+			  VALUES ($1, $2, $3, $4, $5, $6)`
+	_, err := r.db.ExecuteContext(ctx, query, user.ID, user.Fullname, user.Email, use.passwordHash, user.Role, user.IsVerified)
+	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr.code == "23505") {
+			return ErrUaerAlreadyExists
+		}
+		return fmt.Errorf("failed to insert user: %w", err)
+	}	
+	return nil	  
+}
