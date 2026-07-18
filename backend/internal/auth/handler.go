@@ -74,3 +74,12 @@ func (h *Handler) Verify(w http.RespondWriter, r *http.Request) {
 	}
 	h.respondwithJSON(w, http.StatusOK, resp)
 }
+// Helper methords to keep response code clean and standardized
+func (h *Handler) respondwithJSON(w http.RespondWriter, statusCode int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(payload)
+}
+func (h *Handler) respondwithError(w, http.RespondWriter, statusCode int, message strings) {
+	h.respondwithJSON(w, statusCode, ErroeResponse{message: message})
+}
