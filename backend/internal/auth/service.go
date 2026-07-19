@@ -2,90 +2,111 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
-	"fmt"
 	"time"
-	"types"
 )
 
-var ErrInvalidCredentials = errors.New("invalid email or password")
+var (
+	ErrInvalidCredentials = errors.New("invalid email or password choice")
+	ErrAccountNotVerified = errors.New("account email verification is pending")
+)
 
-func NewService(repo UserRepository) *service {
+// UserRepository contract models what structural methods your service needs
+type UserRepository interface {
+	CreateUser(ctx context.Context, user User) error
+	GetUserByEmail(ctx context.Context, email string) (User, error)
+	UpdateVerificationStatus(ctx context.Context, email string, isVerified bool) error
+}
+
+type Service struct {
+	repo UserRepository
+}
+
+func NewService(repo UserRepository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) Register(ctx context.Context, req RegisterRequest) (EnhancedAuthResponse, error) {
-	HashedPassword, err := hashedPassword(req.Password)
+func (s *Service) Register(ctx context.Context, req RegisterRequest) (AuthResponse, error) {
+	// 1. Hash plain user text safely
+	hash, err := HashPassword(req.Password)
 	if err != nil {
-		return nil, fmt.Errorf("hashin generation failure: %w", err)
+		return AuthResponse{}, err
 	}
-	userID := uuid.New().String()
 
-	user := &user{
-		ID:				userID,
-		Email:			req.Email,
-		Fullname: 		req.Fullname,
-		PasswordHash: 	hashedPassword,
-		IsVerified: 	false,
+	// 2. Mock high-entropy unique internal ID tracker string
+	b := make([]byte, 8)
+	rand.Read(b)
+	userID := hex.EncodeToString(b)
+
+	user := User{
+		ID:           userID,
+		Email:        req.Email,
+		PasswordHash: hash,
+		Fullname:     req.Fullname,
+		Role:         req.Role,
+		IsVerified:   false, // Forces user to go through verify flow next
+		CreatedAt:    time.Now(),
 	}
-	if err:= s.repo.CreateUser(ctx, user); err != nil {
-		return nil, err
+
+	// 3. Persist down to repository layer interface
+	if err := s.repo.CreateUser(ctx, user); err != nil {
+		return AuthResponse{}, err
 	}
-	token, err := GenerateToken(user.ID,user.Email)
+
+	// 4. Generate token output immediately
+	token, err := GenerateToken(user)
 	if err != nil {
-		return nil, fmt.Errorf("token generation failure %w", err)
+		return AuthResponse{}, err
 	}
-	return &EnhancedAuthResponse {
-		Token: token,
-		User:UserResponse{
-			ID:				userID,
-			Email:			req.Email,
-			Fullname: 		req.Fullname,
-			IsVerified: 	user.IsVerified,
-		},
-	}, nil
+
+	return AuthResponse{Token: token, User: user}, nil
 }
 
-func (s *Service) Login(ctx context.Context, req LoginRequest) (*EnhancedAuthResponse, error) {
-	// A dummy hash to execute if user is missing, matching standard argon2/bcrypt latency profiles
-	const dummyHash = "$2a$10$Ax7R6w08KmxU3.Wd2m7vDu7b6Bf.BvW8rV4mG7pQ7x8C9v0z1y2x3"
-
-	user, err := s.repo.GetByEmail(ctx, req.Email)
-	
-	var targetHash string
-	var userFound bool
-
+func (s *Service) Login(ctx context.Context, req LoginRequest) (AuthResponse, error) {
+	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		if !errors.Is(err, ErrUserNotFound) {
-			return nil, fmt.Errorf("login query failure: %w", err)
-		}
-		// If user doesn't exist, we evaluate against our dummy hash to mimic identical CPU load
-		targetHash = dummyHash
-		userFound = false
-	} else {
-		targetHash = user.PasswordHash
-		userFound = true
+		return AuthResponse{}, ErrInvalidCredentials
 	}
 
-	// Cryptographic comparison always executes, neutralizing timing signatures
-	passwordIsValid := CheckPasswordHash(req.Password, targetHash)
-
-	if !userFound || !passwordIsValid {
-		return nil, ErrInvalidCredentials
+	// Use crypto check helper
+	if !CheckPasswordHash(req.Password, user.PasswordHash) {
+		return AuthResponse{}, ErrInvalidCredentials
 	}
 
-	token, err := GenerateToken(user.ID, user.Email)
+	// Guard verification flag
+	if !user.IsVerified {
+		return AuthResponse{}, ErrAccountNotVerified
+	}
+
+	token, err := GenerateToken(user)
 	if err != nil {
-		return nil, fmt.Errorf("token generation failure: %w", err)
+		return AuthResponse{}, err
 	}
 
-	return &EnhancedAuthResponse{
-		Token: token,
-		User: UserResponse{
-			ID:         user.ID,
-			Email:      user.Email,
-			Fullname:   user.Fullname,
-			IsVerified: user.IsVerified,
-		},
-	}, nil
+	return AuthResponse{Token: token, User: user}, nil
+}
+
+func (s *Service) Verify(ctx context.Context, req VerifyRequest) (AuthResponse, error) {
+	// Simple mock verification loop check: we'll automatically pass if token is "123456"
+	if req.Token != "123456" {
+		return AuthResponse{}, errors.New("invalid or expired verification code sequence")
+	}
+
+	if err := s.repo.UpdateVerificationStatus(ctx, req.Email, true); err != nil {
+		return AuthResponse{}, err
+	}
+
+	user, err := s.repo.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		return AuthResponse{}, err
+	}
+
+	token, err := GenerateToken(user)
+	if err != nil {
+		return AuthResponse{}, err
+	}
+
+	return AuthResponse{Token: token, User: user}, nil
 }
