@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VecAI - Construction Project Management Portal</title>
+    <style>
+        :root {
+            --bg-primary: #101c38;
+            --surface: #1f2937;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --text: #f9fafb;
+            --text-muted: #9ca3af;
+            --border: #374151;
+            --error: #ef4444;
+            --success: #10b981;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg-primary); color: var(--text); display: flex; height: 100vh; justify-content: center; align-items: center; }
+        .auth-container { background-color: var(--surface); padding: 2.5rem; border-radius: 8px; width: 100%; max-width: 420px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); border: 1px solid var(--border); }
+        h2 { margin-bottom: 0.5rem; font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; }
+        p.subtitle { color: var(--text-muted); margin-bottom: 2rem; font-size: 0.875rem; }
+        
+        .form-group { margin-bottom: 1.25rem; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); }
+        
+        /* Fixed Password Container Positioning */
+        .password-wrapper { position: relative; display: flex; align-items: center; }
+        .password-wrapper input { padding-right: 3.5rem; }
+        .toggle-password-btn { position: absolute; right: 0.75rem; background: none; border: none; color: var(--accent); font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+        .toggle-password-btn:hover { color: var(--accent-hover); }
+
+        input, select { width: 100%; padding: 0.75rem; background-color: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 1rem; }
+        input:focus, select:focus { outline: none; border-color: var(--accent); }
+        
+        button[type="submit"] { width: 100%; padding: 0.75rem; background-color: var(--accent); color: white; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; transition: background-color 0.2s; }
+        button[type="submit"]:hover { background-color: var(--accent-hover); }
+        
+        .toggle-link { text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted); }
+        .toggle-link span { color: var(--accent); cursor: pointer; font-weight: 500; }
+        .toggle-link span:hover { text-decoration: underline; }
+        
+        .message-box { padding: 0.75rem; border-radius: 6px; margin-bottom: 1.25rem; font-size: 0.875rem; display: none; }
+        .message-box.error { background-color: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); color: var(--error); display: block; }
+        .message-box.success { background-color: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); color: var(--success); display: block; }
+        
+        /* State engine styles */
+        .register-only { display: none; }
+        body.state-register .register-only { display: block; }
+        body.state-register .login-only { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="auth-container">
+    <h2 id="auth-title">Welcome Back</h2>
+    <p class="subtitle" id="auth-subtitle">Sign in to access your construction engine dashboards.</p>
+
+    <div id="message" class="message-box"></div>
+
+    <form id="auth-form">
+        <!-- Register-only field: Name -->
+        <div class="form-group register-only">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" placeholder="John Doe">
+        </div>
+
+        <div class="form-group">
+            <label for="email">Work Email</label>
+            <input type="email" id="email" required placeholder="name@company.com">
+        </div>
+
+        <!-- Fixed Password Form Group -->
+        <div class="form-group">
+            <label for="password">Password</label>
+            <div class="password-wrapper">
+                <input type="password" id="password" required placeholder="••••••••">
+                <button type="button" id="togglePassword" class="toggle-password-btn">Show</button>
+            </div>
+        </div>
+
+        <!-- Register-only field: Project Domain Role -->
+        <div class="form-group register-only">
+            <label for="role">Project Assignment Role</label>
+            <select id="role">
+                <option value="owner">Project Owner</option>
+                <option value="architect">Lead Architect</option>
+                <option value="engineer">Structural Engineer</option>
+                <option value="contractor">General Contractor</option>
+                <option value="supplier">Material Supplier</option>
+            </select>
+        </div>
+
+        <button type="submit" id="submit-btn">Sign In</button>
+    </form>
+
+    <p class="toggle-link" id="toggle-container">
+        Don't have an account? <span id="switch-state-btn">Create one</span>
+    </p>
+</div>
+
+<script>
+    const body = document.body;
+    const form = document.getElementById('auth-form');
+    const authTitle = document.getElementById('auth-title');
+    const authSubtitle = document.getElementById('auth-subtitle');
+    const submitBtn = document.getElementById('submit-btn');
+    const messageBox = document.getElementById('message');
+    
+    const passwordInput = document.getElementById('password');
+    const togglePasswordBtn = document.getElementById('togglePassword');
+
+    let isLoginState = true;
+
+    // Password Show/Hide Toggle Logic
+    togglePasswordBtn.addEventListener('click', function () {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        this.textContent = type === 'password' ? 'Show' : 'Hide';
+    });
+
+    // Unified Layout Switching Logic
+    function handleStateSwitch() {
+        isLoginState = !isLoginState;
+        messageBox.className = 'message-box'; // clear error states
+        
+        const container = document.getElementById('toggle-container');
+        
+        if (isLoginState) {
+            body.classList.remove('state-register');
+            authTitle.innerText = "Welcome Back";
+            authSubtitle.innerText = "Sign in to access your construction engine dashboards.";
+            submitBtn.innerText = "Sign In";
+            container.innerHTML = `Don't have an account? <span id="switch-state-btn">Create one</span>`;
+        } else {
+            body.classList.add('state-register');
+            authTitle.innerText = "Create Account";
+            authSubtitle.innerText = "Join the project group as an authorized node.";
+            submitBtn.innerText = "Register Member";
+            container.innerHTML = `Already registered? <span id="switch-state-btn">Sign in here</span>`;
+        }
+        
+        // Safely rebind event listener to the newly generated innerHTML button node
+        document.getElementById('switch-state-btn').addEventListener('click', handleStateSwitch);
+    }
+
+    // Attach initial state switch listener
+    document.getElementById('switch-state-btn').addEventListener('click', handleStateSwitch);
+
+    // Unified Intercept Form Submission Dispatcher
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        messageBox.className = 'message-box'; // clear
+        
+        const email = document.getElementById('email').value;
+        const password = passwordInput.value;
+        
+        let payload = {};
+        let targetEndpoint = '/auth/login';
+
+        if (isLoginState) {
+            payload = { email, password };
+        } else {
+            targetEndpoint = '/auth/register';
+            const name = document.getElementById('name').value;
+            const role = document.getElementById('role').value;
+            payload = { name, email, password, role };
+        }
+
+        try {
+            const response = await fetch(targetEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Authentication operational failure.');
+            }
+
+            if (isLoginState) {
+                messageBox.innerText = "Authentication approved. Accessing ecosystem...";
+                messageBox.classList.add('success');
+                
+                if (data.token) {
+                    localStorage.setItem('vecai_token', data.token);
+                }
+            } else {
+                messageBox.innerText = "Registration verified! You can now authenticate.";
+                messageBox.classList.add('success');
+                document.getElementById('switch-state-btn').click(); // Reset layout frame
+            }
+        } catch (error) {
+            messageBox.innerText = error.message;
+            messageBox.classList.add('error');
+        }
+    });
+</script>
+</body>
+</html>

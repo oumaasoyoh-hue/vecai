@@ -1,10 +1,12 @@
 package auth
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
+
 type Handler struct {
 	service *Service
 }
@@ -12,65 +14,77 @@ type Handler struct {
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
-// register Handles POST/auth register requests
-func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
+
+// Register Handles POST /auth/register
+func (h *Handler) Register(c *gin.Context) {
 	var req RegisterRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondwithError(w, http.StatusBadRequest, "Invalid JSON request payload")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON payload"})
 		return
 	}
-	if req.Email == "" || req.Fullname == "" || req.Role == "" {
-		h.respondwithError(w, http.StatusBadRequest, "All registration fields are required")
-		return 
+
+	// Still decouple your core rules via validator.go
+	if err := ValidateRegister(req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
-	resp, err := h,service.Register(r.Context(), req)
+
+	resp, err := h.service.Register(c.Request.Context(), req)
 	if err != nil {
 		if errors.Is(err, ErrUserAlreadyExists) {
-			h.respondwithError(w, http.StatusConflict, err.Error())
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 			return
 		}
-		h.respondwithError(w, http.StatusInternalServerError, "FAiled to register user")
-		return
-	}35884804
-	h.respondwithJSON(w, http.StatusCreated, resp)
-}
-// register Handles POST/auth login requests
-func (h *Handler) Login(w http.RespondWriter, r *http.Request) {
-	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondwithError(w, httpStatusBadRequest, "Invalid JSON requrst payload")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Registration failed"})
 		return
 	}
-	resp, err := h.service.Login(r.Context(), req)
+
+	c.JSON(http.StatusCreated, resp)
+}
+
+// Login Handles POST /auth/login
+func (h *Handler) Login(c *gin.Context) {
+	var req LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON payload"})
+		return
+	}
+
+	if err := ValidateLogin(req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp, err := h.service.Login(c.Request.Context(), req)
 	if err != nil {
 		if errors.Is(err, ErrInvalidCredentials) {
-			h.respondwithError(w, http.StatusUnauthorized, err.Error())
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
-		if errors.Is(err, ErrAcountNotVerified) {
-			h.respondwithError(w, http.StatusForbidden, err.Error())
+		if errors.Is(err, ErrAccountNotVerified) {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 			return
 		}
-		h.respondwithError(w, http.StatusInternalServerError, "An internal error occured")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Authentication failed"})
 		return
 	}
-	h.respondwithJSON(w, http.StatusOK, resp)
+
+	c.JSON(http.StatusOK, resp)
 }
-// verify handles with POST/auth/verify requests
-func (h *Handler) Verify(w http.RespondWriter, r *http.Request) {
+
+// Verify Handles POST /auth/verify
+func (h *Handler) Verify(c *gin.Context) {
 	var req VerifyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondwithError(w, http.StatusBadRequest, "Invalid JSON request payload")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON payload"})
 		return
 	}
-	if req.Token == "" || req.Eamil == "" {
-		h.respondwithError(w, httpStatusBadRequest, "Token and email are required for verification")
-		return
-	}
-	resp, err := h.service.Verify(r.Context(), req)
+
+	resp, err := h.service.Verify(c.Request.Context(), req)
 	if err != nil {
-		h.respondwithError(w, http.StatusBadRequest, "verification failed: "+err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	h.respondwithJSON(w, http.StatusOK, resp)
+
+	c.JSON(http.StatusOK, resp)
 }

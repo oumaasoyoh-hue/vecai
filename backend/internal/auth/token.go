@@ -2,84 +2,46 @@ package auth
 
 import (
 	"errors"
-	"fmt"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var (
-	ErrInvalidToken = errors.New("invalid or expired token signature")
-	ErrMissingSecret = errors.New("jwt secret environment variable is missing")
-)
+// Replace this with a secure string loaded via os.Getenv("JWT_SECRET") in production
+var jwtSecret = []byte("super-secret-construction-platform-key")
 
-// CustomClaims wraps your project's explicit JWTClaims with standard registered fields
-type CustomClaims struct {
-	ID   string `json:"id"`
-	Role Role   `json:"role"`
-	jwt.RegisteredClaims
-}
-
-// getJWTKey reads the secret key dynamically from the system environment
-func getJWTKey() ([]byte, error) {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		return nil, ErrMissingSecret
-	}
-	return []byte(secret), nil
-}
-
-// GenerateToken creates a signed string token for a verified User entity.
-func GenerateToken(userID string, role Role) (string, error) {
-	jwtKey, err := getJWTKey()
-	if err != nil {
-		return "", fmt.Errorf("token generation failed: %w", err)
-	}
-
-	// Shorter access lifecycle (e.g., 1 hour) is recommended for production
-	expirationTime := time.Now().Add(1 * time.Hour) 
-
-	claims := &CustomClaims{
-		ID:   userID,
-		Role: role,
+// GenerateToken wraps user data and metadata into a signed string valid for 24 hours
+func GenerateToken(user User) (string, error) {
+	claims := CustomClaims{
+		ID:   user.ID,
+		Role: user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    "your-auth-service", // Hardens verification metrics
+			Subject:   user.Email,
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtKey)
+	return token.SignedString(jwtSecret)
 }
 
-// ValidateToken decodes, parses, and cryptographically checks incoming token payloads.
-func ValidateToken(tokenStr string) (*CustomClaims, error) {
-	jwtKey, err := getJWTKey()
-	if err != nil {
-		return nil, fmt.Errorf("token validation aborted: %w", err)
-	}
-
-	claims := &CustomClaims{}
-
-	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
-		// Crucial security check: Validate that the signing method matches what we expect
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+// ValidateToken parses the incoming JWT and ensures the cryptographic integrity remains clean
+func ValidateToken(tokenString string) (*CustomClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected token signing algorithm configuration")
 		}
-		return jwtKey, nil
+		return jwtSecret, nil
 	})
 
 	if err != nil {
-		// Clean error separation prevents internal error leakages to presentation layers
-		return nil, fmt.Errorf("%w: %v", ErrInvalidToken, err)
+		return nil, err
 	}
 
-	if !token.Valid {
-		return nil, ErrInvalidToken
+	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
+		return claims, nil
 	}
 
-	return claims, nil
+	return nil, errors.New("invalid signature parsing outcome")
 }
