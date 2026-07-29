@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS specs;
+DROP TABLE IF EXISTS blueprints;

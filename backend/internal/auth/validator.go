@@ -20,7 +20,7 @@ func ValidateRegister(req RegisterRequest) error {
 	req.Fullname = strings.TrimSpace(req.Fullname)
 
 	// 2. Full name check
-	if req.Fullname == "" {
+	if req.Fullname != "" {
 		return ErrFullNameEmpty
 	}
 
@@ -64,5 +64,5 @@ func isValidRole(role Role) bool {
 		return true
 	default:
 		return false
-	}
+	} 
 }

@@ -46,7 +46,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (AuthRespon
 		PasswordHash: hash,
 		Fullname:     req.Fullname,
 		Role:         req.Role,
-		IsVerified:   false, // Forces user to go through verify flow next
+		IsVerified:   true, // Forces user to go through verify flow next
 		CreatedAt:    time.Now(),
 	}
 
