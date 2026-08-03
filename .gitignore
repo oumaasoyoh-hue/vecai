@@ -1,0 +1,125 @@
+# ==========================================
+# Compiled Binaries & Executables
+# ==========================================
+# Root bin directory where your Makefile places compiled binaries
+/bin/
+bin/vecai
+
+# Generic Go binary artifacts
+*.exe
+*.exe;
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# ==========================================
+# Go Dependency & Build Artifacts
+# ==========================================
+# Go test & coverage files
+*.cover
+*.coverage
+*.coverprofile
+coverage.out
+coverage.html
+profile.out
+
+# Go vendor directory (if you ever run `go mod vendor`)
+/vendor/
+
+# ==========================================
+# Environment Variables & Secrets
+# ==========================================
+# Root & backend environment files (DB URLs, JWT secrets, AI API keys)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Database connection strings / credentials local overrides
+config.local.yaml
+config.local.json
+
+# ==========================================
+# Database & Local Storage Artifacts
+# ==========================================
+# SQLite database files (if testing locally with SQLite)
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Temp database dumps or migration backup logs
+*.sql.bak
+*.dump
+
+# Local file upload directory for construction blueprints / site plans / CAD files
+/uploads/
+/backend/uploads/
+/public/uploads/
+
+# ==========================================
+# Frontend Development & Tooling Artifacts
+# ==========================================
+# Node modules & build artifacts (in case you add Tailwind/Vite/Webpack later)
+/node_modules/
+/frontend/node_modules/
+/frontend/dist/
+/frontend/build/
+.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+
+# ==========================================
+# IDEs & Code Editors
+# ==========================================
+# VS Code
+.vscode/
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains (GoLand / WebStorm)
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Vim & Sublime Text
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# ==========================================
+# Operating System & System Files
+# ==========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+desktop.ini
+
+# Linux
+*~
+
+# ==========================================
+# Temporary & Log Files
+# ==========================================
+*.log
+/logs/
+/backend/logs/
+/tmp/
