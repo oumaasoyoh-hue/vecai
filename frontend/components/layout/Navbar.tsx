@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -12,7 +13,7 @@ const NAV_LINKS = [
   { label: "Solutions", href: "/solutions" },
   { label: "How It Works", href: "/how-it-works" },
   { label: "Pricing", href: "/pricing" },
-  { label: "Industries", href: "/industries"},
+  { label: "Industries", href: "/industries" },
 ];
 
 export function Navbar() {
@@ -38,14 +39,19 @@ export function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
-          {/* Brand Logo */}
+          {/* Brand Logo Image */}
           <Link href="/" className="flex items-center gap-2 group">
-            <span className="text-2xl font-black tracking-wider text-white">
-              VECAI<span className="text-[#F28500]">.</span>
-            </span>
+            <Image
+              src="/assets/images/logo.png"
+              alt="VECAI Logo"
+              width={140}
+              height={40}
+              className="h-10 w-auto object-contain"
+              priority
+            />
           </Link>
 
-          {/* Desktop Navigation Links - Styled in Orange */}
+          {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-8">
             {NAV_LINKS.map((link) => (
               <Link
