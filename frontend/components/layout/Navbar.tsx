@@ -42,7 +42,7 @@ export function Navbar() {
           {/* Brand Logo Image */}
           <Link href="/" className="flex items-center gap-2 group">
             <Image
-              src="/assets/images/logo.png"
+              src="/assets/logos/vecai-logo.png"
               alt="VECAI Logo"
               width={140}
               height={40}
