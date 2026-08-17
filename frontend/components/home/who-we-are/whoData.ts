@@ -6,7 +6,7 @@ export const WHO_WE_ARE_DATA: WhoCardData[] = [
     id: 1,
     title: "Our Mission",
     description:
-      "To simplify construction through intelligent technology, making planning, estimating, and project delivery more accessible and efficient.",
+      "To Digitize construction project management by providing easy to use platform that improves collaboration, accountability, productivity, and descision making through technology",
     icon: Target,
     color: "blue",
     href: "#mission",
@@ -33,7 +33,7 @@ export const WHO_WE_ARE_DATA: WhoCardData[] = [
     id: 4,
     title: "Our Vision",
     description:
-      "To build a smarter future where technology makes construction more efficient, accessible, and transparent.",
+      "To become worlds leading construction management platform that enables construction professionals to deliver projects efficiently transparently and with minimal resource wastage.",
     icon: Eye,
     color: "orange",
     href: "#vision",
