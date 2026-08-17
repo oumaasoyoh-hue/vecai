@@ -11,17 +11,16 @@ export function WhoWeAre() {
   const whyCard = WHO_WE_ARE_DATA.find((c) => c.id === 3)!;
   const visionCard = WHO_WE_ARE_DATA.find((c) => c.id === 4)!;
 
-  // Image path pointing to public/assets/images/hero/who.jpeg
   const imagePath = "/assets/images/hero/who.jpeg";
 
   return (
     <section
-      className="py-16 md:py-24 bg-[#F8FAFC] overflow-hidden"
+      className="pb-16 md:pb-24 bg-[#F8FAFC] overflow-hidden"
       aria-labelledby="who-we-are-heading"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-16">
+      {/* Top Blue Header Banner */}
+      <div className="w-full bg-[#000080] py-12 px-4 sm:px-6 lg:px-8 mb-12 lg:mb-16 text-center border-b-4 border-[#F28500]">
+        <div className="max-w-4xl mx-auto">
           <motion.span
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -38,7 +37,7 @@ export function WhoWeAre() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#000080] tracking-tight mb-6"
+            className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mb-4"
           >
             Building Africa&apos;s Future Through Intelligent Construction
           </motion.h2>
@@ -48,17 +47,17 @@ export function WhoWeAre() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-base sm:text-lg text-slate-600 leading-relaxed"
+            className="text-base sm:text-lg text-slate-200 leading-relaxed"
           >
             VECAI is transforming construction by connecting people, technology
             and artificial intelligence into one smart platform that simplifies
             planning, estimating, collaboration and project delivery.
           </motion.p>
         </div>
+      </div>
 
-        {/* Layout: Mobile Stack (< lg) / Desktop Cross Shape (>= lg) */}
-        
-        {/* Mobile / Tablet Vertical Stack */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Mobile / Tablet Vertical Stack (< lg) */}
         <div className="flex flex-col items-center gap-6 lg:hidden">
           <WhoCard card={missionCard} />
           <WhoCard card={storyCard} />
@@ -72,7 +71,7 @@ export function WhoWeAre() {
           <WhoCard card={visionCard} />
         </div>
 
-        {/* Desktop Cross Layout Grid */}
+        {/* Original Desktop Cross Layout Grid (>= lg) */}
         <div className="hidden lg:flex flex-col items-center justify-center gap-8">
           {/* Top Row: Mission */}
           <div className="flex justify-center w-full">
